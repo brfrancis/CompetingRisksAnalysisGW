@@ -27,6 +27,9 @@ import threading
 from multiprocessing import Process, Manager
 import itertools
 import time
+import warnings
+#from rpy2.rinterface import RRuntimeWarning
+#warnings.filterwarnings("ignore", category=RRuntimeWarning)
 #from multiprocessing.dummy import Pool as ThreadPool 
 	
 def do_work(in_queue, out_list, sub):
@@ -154,7 +157,9 @@ parser.add_argument('--covs', type=str, default="",
                     help='comma delimited list of covariates in SAMPLE file')
 args=parser.parse_args()
 
-
+print("##############################")
+print("#      WELCOME TO CRAG       #")
+print("##############################")
 
 # Reduce sample to needed covs
 sample = pd.read_csv(args.sfile,sep=" ") 
@@ -168,6 +173,8 @@ sub=sub.drop([0])
 colNames = ('chr','snp','bp','p','info','maf','hwe','beta','se','conv')
 ss=pd.read_csv(args.statfile,sep="\t")
 #CHR SNP BP P INFO MAF HWE BETA SE CONV
+print("#     BEGIN ANALYSIS...      #")
+print("##############################")
 if __name__ == "__main__":	
 	num_workers = 1
 	
@@ -195,5 +202,6 @@ if __name__ == "__main__":
 	final.to_csv(args.ofile + ".out",sep=" ",index=False)
 	#for i in range(1, len(results)):
 	#	print(results[i])
-	
-
+print("##############################")
+print("#      END OF ANALYSIS       #")
+print("##############################")
