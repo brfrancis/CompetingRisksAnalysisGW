@@ -186,7 +186,7 @@ if __name__ == "__main__":
 		
 	f_results=pd.concat(results)
 	final=f_results.ix[:,colNames]
-	#final.to_csv(args.file + ".out",sep=" ",index=False)
+	final.to_csv(args.file + ".out",sep=" ",index=False)
 	#for i in range(1, len(results)):
 	#	print(results[i])
 	
