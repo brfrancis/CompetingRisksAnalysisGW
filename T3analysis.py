@@ -22,7 +22,6 @@ pandas2ri.activate()
 base = importr('base')
 #import R's "utils" package
 utils = importr('utils')
-import rpy2.robjects.packages as rpackages
 cmprsk = importr('cmprsk')
 import threading
 from multiprocessing import Process, Manager
