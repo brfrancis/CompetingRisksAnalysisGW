@@ -1,5 +1,4 @@
-
-# run_max.py
+#!/opt/apps/resif/data/production/v0.3-20170713/default/software/lang/Python/3.5.3-intel-2017a/bin/python
 import subprocess
 import sys
 import csv
@@ -36,60 +35,12 @@ def do_work(in_queue, out_list, sub):
 	while True:
 		item = in_queue.get()
 		line_no, line = item
-
         # exit signal 
 		if line == None:
 			return
-
 		# work
-		#result = crgwas(line, line_no )
-		# fake work
-		i=line_no
-		ssline=ss.iloc[i,:];
-		
-		gl=line.split(' ');	
-		df2 = pd.DataFrame({'snp':[ssline['RSID']],'bp':[ssline['position']],'info':[ssline['information']],'maf':[ssline['MAF']],'hwe':[ssline['HWE']]})
-		gp0=gl[5::3];
-		gp1=gl[6::3]; 
-		gp2=gl[7::3];
-		gp = [];a_l=len(gp1)
-		for item in range(a_l):
-			if (float(gp0[item])+float(gp1[item])+float(gp2[item]))>0:
-				gp.append(float(gp1[item])+(2*float(gp2[item])))
-			else:
-				gp.append(np.nan)
-		
-		
-		# sub = pd.DataFrame({'time_to': [150,200,300,140,500],
-								# 'Reason_stop': [1,1,2,2,0],
-								# 'S200_NEUROL_EXAM_RESULT': [1,0,1,1,0], 
-								# 'S383_LEARNING_DISABILITY': [0,1,1,1,1],
-								# 'S188_POSITIVE_FAMHX': [1,1,0,0,0], 
-								# 'Age': [21,22,40,50,10]})		
-		sub['gz']=gp
-		#print(ft)
-		#sub[args.covs.split(',')]
-		sub[[args.t_pheno, args.et_pheno]] = sub[[args.t_pheno, args.et_pheno]].astype(int)
-		robjects.globalenv['sub'] = sub
-		#print(sub[args.t_pheno])
-		#print(sub[args.et_pheno])
-		#print(sub['gz'])
-		test=cmprsk.crr(ftime=sub[args.t_pheno],fstatus=sub[args.et_pheno],cov1=sub.iloc[:,2:],failcode=args.obs,cencode=0)
-		res=base.summary(test).rx2('coef')
-		#resconv=base.summary(test).rx2('conv')
-		#print(resconv)
-		df3 = pd.DataFrame({'beta':[res.rx('gz',1)],'se':[res.rx('gz',3)],'p':[res.rx('gz',5)],'conv':[1]})
-		df3['beta'] = df3['beta'].str[0]
-		df3['se'] = df3['se'].str[0]
-		df3['p'] = df3['p'].str[0]
-		df1 = pd.DataFrame({'chr':[args.chr]})
-		df2=df1.join(df2)
-		result=df2.join(df3)
-		#print(pydata)
-		
-		#result = rdata
-		#result = (line_no, line)
-
+		result = crgwas(line, line_no )
+		# output
 		out_list.append(result)
 	
 def crgwas(line, line_no ):
@@ -105,32 +56,22 @@ def crgwas(line, line_no ):
 			if (float(gp0[item])+float(gp1[item])+float(gp2[item]))>0:
 				gp.append(float(gp1[item])+(2*float(gp2[item])))
 			else:
-				gp.append(-9)
-		#print(' '.join(map(str,gp)));
-		# PASS DATA FROM PYTHON TO R
-		rdata=robjects.DataFrame(sub)
-		gz=robjects.DataFrame(gp)
-		# SHOW DATA SUMMARY
-		#print(r("summary(rdata)"))
-
-		# r("library(cmprsk)")
-		r("a=rdata[-1,]")
-		r("gz[gz==-9]<-NA")
-		r("test<-crr(ftime=as.numeric(a[,1]),fstatus=a[,2],cov1=cbind(gz,a[,c(-1,-2)]),failcode=" + args.obs  + ",cencode=0)")
-		r("beta=summary(test)$coef[1,1]")
-		r("se=summary(test)$coef[1,3]")
-		r("pval=summary(test)$coef[1,5]")
-		r("conv=summary(test)$conv")
-		df3 = pd.DataFrame(np.transpose(r.get("rbind(beta,se,pval,conv)")),columns=('beta','se','p','conv'))
+				gp.append(np.nan)
+		sub['gz']=gp
+		sub[[args.t_pheno, args.et_pheno]] = sub[[args.t_pheno, args.et_pheno]].astype(int)
+		robjects.globalenv['sub'] = sub
+		test=cmprsk.crr(ftime=sub[args.t_pheno],fstatus=sub[args.et_pheno],cov1=sub.iloc[:,2:],failcode=args.obs,cencode=0)
+		res=base.summary(test).rx2('coef')
+		#resconv=base.summary(test).rx2('conv')
+		#print(resconv)
+		df3 = pd.DataFrame({'beta':[res.rx('gz',1)],'se':[res.rx('gz',3)],'p':[res.rx('gz',5)],'conv':[1]})
+		df3['beta'] = df3['beta'].str[0]
+		df3['se'] = df3['se'].str[0]
+		df3['p'] = df3['p'].str[0]
 		df1 = pd.DataFrame({'chr':[args.chr]})
 		df2=df1.join(df2)
-		pydata=df2.join(df3)
-		print(pydata)
-		return pydata;
-		#print(pydata)
-		
-		#print(pydata.iloc[:,0])
-
+		result=df2.join(df3)
+		return result;
 
 parser = argparse.ArgumentParser()
 
@@ -200,8 +141,6 @@ if __name__ == "__main__":
 	f_results=pd.concat(results)
 	final=f_results.ix[:,colNames]
 	final.to_csv(args.ofile + ".out",sep=" ",index=False)
-	#for i in range(1, len(results)):
-	#	print(results[i])
 print("##############################")
 print("#      END OF ANALYSIS       #")
 print("##############################")
