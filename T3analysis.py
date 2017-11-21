@@ -22,6 +22,7 @@ pandas2ri.activate()
 base = importr('base')
 #import R's "utils" package
 utils = importr('utils')
+import rpy2.robjects.packages as rpackages
 cmprsk = importr('cmprsk')
 import threading
 from multiprocessing import Process, Manager
@@ -186,7 +187,7 @@ if __name__ == "__main__":
 		
 	f_results=pd.concat(results)
 	final=f_results.ix[:,colNames]
-	print(final)
+	#final.to_csv(args.file + ".out",sep=" ",index=False)
 	#for i in range(1, len(results)):
 	#	print(results[i])
 	
