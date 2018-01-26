@@ -227,7 +227,6 @@ def crgwas(line, line_no ):
 		
 		df1 = pd.DataFrame({'chr':[args.chr],'snp':[gl[1]],'bp':[gl[2]],'info':[info],'maf':[maf],'hwe':[hwe],'ea':[gl[3]],'nea':[gl[4]]})
 		result=df1.join(df3)
-		print(result)
 		return result;
 	
 
