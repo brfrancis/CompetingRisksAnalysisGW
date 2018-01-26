@@ -1,5 +1,8 @@
 #!/opt/apps/resif/data/production/v0.3-20170713/default/software/lang/Python/3.5.3-intel-2017a/bin/python
+<<<<<<< HEAD
 #export PYTHONPATH=/opt/apps/resif/data/production/v0.3-20170713/default/software/lang/Python/3.5.3-intel-2017a/bin/python
+=======
+>>>>>>> 0616cc2d81b43841f725a6cd340a00f5b1bb0558
 import subprocess
 import sys
 import math
@@ -160,11 +163,25 @@ def do_work(in_queue, out_list, sub):
 	while True:
 		item = in_queue.get()
 		line_no, line = item
+<<<<<<< HEAD
 
 	# exit signal 
 		if line == None:
 			return	
 		
+=======
+        # exit signal 
+		if line == None:
+			return
+		# work
+		result = crgwas(line, line_no )
+		# output
+		out_list.append(result)
+	
+def crgwas(line, line_no ):
+		i=line_no
+		ssline=ss.iloc[i,:];
+>>>>>>> 0616cc2d81b43841f725a6cd340a00f5b1bb0558
 		gl=line.split(' ');	
 		gp0j=gl[5::3];
 		gp1j=gl[6::3]; 
@@ -181,6 +198,7 @@ def do_work(in_queue, out_list, sub):
 				gp.append(gp1[i]+(2*gp2[i]))
 			else:
 				gp.append(np.nan)
+<<<<<<< HEAD
 				miss+=1
 		gp0n=np.nansum(gp0)
 		gp1n=np.nansum(gp1)
@@ -194,11 +212,12 @@ def do_work(in_queue, out_list, sub):
 
 		#Analysis
 		
+=======
+>>>>>>> 0616cc2d81b43841f725a6cd340a00f5b1bb0558
 		sub['gz']=gp
-		#print(ft)
-		#sub[args.covs.split(',')]
 		sub[[args.t_pheno, args.et_pheno]] = sub[[args.t_pheno, args.et_pheno]].astype(int)
 		robjects.globalenv['sub'] = sub
+<<<<<<< HEAD
 		#print(sub[args.t_pheno])
 		#print(sub[args.et_pheno])
 		#print(sub['gz'])
@@ -222,10 +241,21 @@ def do_work(in_queue, out_list, sub):
 				break
 
 		#print(df3)
+=======
+		test=cmprsk.crr(ftime=sub[args.t_pheno],fstatus=sub[args.et_pheno],cov1=sub.iloc[:,2:],failcode=args.obs,cencode=0)
+		res=base.summary(test).rx2('coef')
+		#resconv=base.summary(test).rx2('conv')
+		#print(resconv)
+		df3 = pd.DataFrame({'beta':[res.rx('gz',1)],'se':[res.rx('gz',3)],'p':[res.rx('gz',5)],'conv':[1]})
+		df3['beta'] = df3['beta'].str[0]
+		df3['se'] = df3['se'].str[0]
+		df3['p'] = df3['p'].str[0]
+>>>>>>> 0616cc2d81b43841f725a6cd340a00f5b1bb0558
 		df1 = pd.DataFrame({'chr':[args.chr]})
 		df2 = pd.DataFrame({'snp':[gl[1]],'bp':[gl[2]],'info':[info],'maf':[maf],'hwe':[hwe],'ea':[gl[3]],'nea':[gl[4]]})
 		df2=df1.join(df2)
 		result=df2.join(df3)
+<<<<<<< HEAD
 		#print(result)
 		#print(pydata)		
 		#result = rdata
@@ -280,6 +310,9 @@ def crgwas(line, line_no ):
 		
 		#print(pydata.iloc[:,0])
 
+=======
+		return result;
+>>>>>>> 0616cc2d81b43841f725a6cd340a00f5b1bb0558
 
 parser = argparse.ArgumentParser()
 
@@ -361,8 +394,6 @@ if __name__ == "__main__":
 	f_results=pd.concat(results)
 	final=f_results.ix[:,colNames]
 	final.to_csv(args.ofile + ".out",sep=" ",index=False)
-	#for i in range(1, len(results)):
-	#	print(results[i])
 print("##############################")
 print("#      END OF ANALYSIS       #")
 print("##############################")
