@@ -4,6 +4,8 @@
 import subprocess
 import sys
 import math
+from lifelines import CoxPHFitter
+cph = CoxPHFitter()
 #import scipy.stats as stats
 #class DevNull:
 #	def write(self, msg):
@@ -12,37 +14,22 @@ import math
 import csv
 import numpy as np
 import pandas as pd
+pd.options.mode.chained_assignment = None
 import gzip
 import time
 start=time.time()
 #import StringIO
 import argparse
-#import pyper as pr
-#r = pr.R(use_pandas = True)
-#r("library(cmprsk)")
-import rpy2.robjects as robjects
 import warnings
 
-r = robjects.r
-#print(rpy2.__version__)
-from rpy2.robjects.packages import importr
-from rpy2.robjects import r, pandas2ri
-pandas2ri.activate()
-# import R's "base" package
-base = importr('base')
-#import R's "utils" package
-utils = importr('utils')
-cmprsk = importr('cmprsk')
+
+
 import threading
 from multiprocessing import Process, Manager
 import itertools
 import time
 import warnings
-robjects.r['options'](warn=-1)
-from rpy2.rinterface import RRuntimeError
-robjects.r('sink("/dev/null")')
 #import progressbar
-#warnings.filterwarnings("ignore", category=RRuntimeWarning)
 #from multiprocessing.dummy import Pool as ThreadPool 
 
 def HWE_test_chi(obs_AA, obs_Aa, obs_aa, miss):
@@ -58,8 +45,8 @@ def HWE_test_chi(obs_AA, obs_Aa, obs_aa, miss):
 
 def maf_calc(gp0n,gp1n,gp2n,a_l,miss):
 	if (gp0n>gp2n):
-		 maf=((2*gp2n+gp1n)/(2*(a_l-miss))) 
-	else: 
+		maf=((2*gp2n+gp1n)/(2*(a_l-miss))) 
+	else:
 		maf=((2*gp0n+gp1n)/(2*(a_l-miss)))
 	return maf	
 
@@ -161,21 +148,25 @@ def do_work(in_queue, out_list, sub):
 	while True:
 		item = in_queue.get()
 		line_no, line = item
-
-        # exit signal 
+	# exit signal 
 		if line == None:
 			return
-		# work
-		result = crgwas(line, line_no )
+		
+		if args.r == 1:
+			# Using R work
+			result = crgwas(line, line_no )
+		if args.r == 0:
+			# Using lifelines work for cause-specific
+			result = pycrgwas(line, line_no)
+		
 		# output
-		print("HERE")
 		out_list.append(result)
 	
 def crgwas(line, line_no ):
 		gl=line.split(' ');	
-		gp0j=gl[5::3];
-		gp1j=gl[6::3]; 
-		gp2j=gl[7::3];
+		gp0j=gl[5::3]
+		gp1j=gl[6::3]
+		gp2j=gl[7::3]
 		
 		gp0=[float(i) for i in gp0j]
 		gp1=[float(i) for i in gp1j]
@@ -207,15 +198,12 @@ def crgwas(line, line_no ):
 		while True:
 			try:
 				test=cmprsk.crr(ftime=sub[args.t_pheno],fstatus=sub[args.et_pheno],cov1=sub.iloc[:,2:],failcode=args.obs,cencode=0)
-				#print("R had an issue with this one:", gl[1])
 				res=base.summary(test).rx2('coef')
-				#resconv=base.summary(test).rx2('conv')
-				#print(resconv)
+				#resconv=base.summary(test).rx2('conv') STILL NEED TO CODE CONV
 				df3 = pd.DataFrame({'beta':[res.rx('gz',1)],'se':[res.rx('gz',3)],'p':[res.rx('gz',5)],'conv':[1]})
 				df3['beta'] = df3['beta'].str[0]
 				df3['se'] = df3['se'].str[0]
 				df3['p'] = df3['p'].str[0]
-				#print(pydata)
 				break
 
 			except RRuntimeError:
@@ -227,8 +215,53 @@ def crgwas(line, line_no ):
 		
 		df1 = pd.DataFrame({'chr':[args.chr],'snp':[gl[1]],'bp':[gl[2]],'info':[info],'maf':[maf],'hwe':[hwe],'ea':[gl[3]],'nea':[gl[4]]})
 		result=df1.join(df3)
+		print(result)
 		return result;
+
+def pycrgwas(line, line_no ):
+		gl=line.split(' ')	
+		gp0j=gl[5::3]
+		gp1j=gl[6::3] 
+		gp2j=gl[7::3]
+		
+		gp0=[float(i) for i in gp0j]
+		gp1=[float(i) for i in gp1j]
+		gp2=[float(i) for i in gp2j]
+		
+		gp = [];a_l=len(gp1)
+		miss=0
+		for i in range(a_l):
+			if (gp0[i]+gp1[i]+gp2[i])>0:
+				gp.append(gp1[i]+(2*gp2[i]))
+			else:
+				gp.append(np.nan)
+				miss+=1
+		gp0n=np.nansum(gp0)
+		gp1n=np.nansum(gp1)
+		gp2n=np.nansum(gp2)
+		
+		#QC measures
+		
+		info=info_calc(gp0,gp1,gp2,a_l,miss)
+		maf=maf_calc(gp0n,gp1n,gp2n,a_l,miss)
+		hwe=HWE_test(gp0n,gp1n,gp2n)
+
+		#Analysis
+		subsnp=sub
+		subsnp['gz']=gp
+		subn = subsnp.dropna()		
+		cph.fit(subn,duration_col=args.t_pheno,event_col='bin',strata='Reason_stop')		
+		#cph.print_summary()
+		df3_1=pd.DataFrame(cph.summary)
+		df3_2=df3_1.loc['gz',:]
+		df3 = pd.DataFrame({'beta':[df3_2.loc['coef']],'se':[df3_2.loc['se(coef)']],'p':[df3_2.loc['p']],'conv':[1]},dtype='str')
+		df1 = pd.DataFrame({'chr':[args.chr],'snp':[gl[1]],'bp':[gl[2]],'info':[info],'maf':[maf],'hwe':[hwe],'ea':[gl[3]],'nea':[gl[4]]})
+		result=df1.join(df3)
+		print(result)
+		return result;
+
 	
+
 
 parser = argparse.ArgumentParser()
 
@@ -243,32 +276,92 @@ parser.add_argument('--chr', type=str,
 		    help='which chromosome')
 parser.add_argument('--chunk', type=str,
 		    help='which 10k chunk is required (currently not used!)')
-parser.add_argument('--obs', type=str, default=1,
-		    help='which obs indicator is the reference group (0 is ALWAYS censored, 1 is default)')
+parser.add_argument('--obs', type=int, default=1,
+		    help='which obs indicator is the competing risk (1 is default, do not specify 0 as it is reserved for censored observations)')
 parser.add_argument('--t_pheno', type=str, default="",
 		    help='time to event in SAMPLE file')
 parser.add_argument('--et_pheno', type=str, default="",
 		    help='event type indicator in SAMPLE file')
 parser.add_argument('--covs', type=str, default="",
 		    help='comma delimited list of covariates in SAMPLE file')
+parser.add_argument('--crtype', type=int, default=0,
+		    help='use 0 for subdistribution competing risks (default) or 1 for cause-specific competing risks')
+parser.add_argument('--r', type=int, default=0,
+		    help='use 1 to perform analysis with R package cmprsk or 0 to perform analysis in Python package lifelines')
 args=parser.parse_args()
+
+if args.r == 1:
+	import rpy2.robjects as robjects
+	r = robjects.r
+	from rpy2.robjects.packages import importr
+	from rpy2.robjects import r, pandas2ri
+	pandas2ri.activate()
+	#import R's "base" package
+	base = importr('base')
+	#import R's "utils" package
+	utils = importr('utils')
+	cmprsk = importr('cmprsk')
+	robjects.r['options'](warn=-1)
+	from rpy2.rinterface import RRuntimeError
+	#warnings.filterwarnings("ignore", category=RRuntimeError) # Sort out why this generates error!
+	robjects.r('sink("/dev/null")')
+
 
 print("##############################")
 print("#      WELCOME TO CRAG       #")
 print("##############################")
 
 # Reduce sample to needed covs
-sample = pd.read_csv(args.sfile,sep=" ") 
-list=args.covs.split(',')
-list.insert(0,args.et_pheno)
-list.insert(0,args.t_pheno)
-sub=sample[list]
-sub=sub.drop([0])
+
+if args.crtype==1:
+
+	sample = pd.read_csv(args.sfile,sep=" ") 
+	list=[args.t_pheno,args.et_pheno]
+	list.extend(args.covs.split(','))
+	sub=sample[list]
+	sub=sub.drop([0])
+	sub[list] = sub[list].apply(pd.to_numeric)
+	sub['bin'] = np.where(sub[args.et_pheno] == args.obs, 1, 0)
+	#print("HERE")	
+
+if args.crtype==0:
+
+	sample = pd.read_csv(args.sfile,sep=" ") 
+	list=[args.t_pheno,args.et_pheno]
+	list.extend(args.covs.split(','))
+	sub=sample[list]
+	sub=sub.drop([0])
+	sub[list] = sub[list].apply(pd.to_numeric)
+	sub['bin'] = np.where(sub[args.et_pheno] == args.obs, 1, 0)
+	tmax=sub.loc[sub['bin']==1]['time_to'].max()
+	#print(sub[args.t_pheno])
+	#print(np.where((sub[args.et_pheno] != args.obs) & (sub[args.et_pheno] != 0)))
+	sub[args.t_pheno] = np.where((sub[args.et_pheno] != args.obs) & (sub[args.et_pheno] != 0), tmax, sub[args.t_pheno])
+	#print(sub[args.t_pheno])
+
+# Check for low variance
+print("#    CLINICAL ANALYSIS...    #")
+print("##############################")
+
+
+low_var = pd.DataFrame(sub.var(0) < 10e-5)
+print("\nResults of the low variance (<10e-5) test... (if True these are removed to avoid convergence issues)")
+print(low_var)
+lvf=low_var[low_var.iloc[:,0] == True]	
+
+if not lvf.empty:	
+	sub = sub.drop(lvf.index,axis = 1)
+
+print("\nResults of pre-GWAS multivariable analysis...")
+cph.fit(sub,duration_col=args.t_pheno,event_col='bin',strata='Reason_stop')		
+cph.print_summary()
+				
 
 # Open gen file and perform calculation every line
 colNames = ('chr','snp','bp','p','info','maf','hwe','beta','se','conv','ea','nea')
 #CHR SNP BP P INFO MAF HWE BETA SE CONV
-print("#     BEGIN ANALYSIS...      #")
+print("##############################")
+print("#   BEGIN GWAS ANALYSIS...   #")
 print("##############################")
 if __name__ == "__main__":	
 	num_workers = 1
@@ -280,7 +373,7 @@ if __name__ == "__main__":
 	#start for workers
 	pool = []
 	for i in range(num_workers):
-		p = Process(target=do_work, args=(work, results, sub))
+		p = Process(target=do_work, args=(work, results,sub))
 		p.start()
 		pool.append(p)
 	i=1
