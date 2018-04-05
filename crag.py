@@ -332,7 +332,7 @@ if args.crtype==0:
 	sub=sub.drop([0])
 	sub[list] = sub[list].apply(pd.to_numeric)
 	sub['bin'] = np.where(sub[args.et_pheno] == args.obs, 1, 0)
-	tmax=sub.loc[sub['bin']==1][arg.t_pheno].max()
+	tmax=sub.loc[sub['bin']==1][args.t_pheno].max()
 	#print(sub[args.t_pheno])
 	#print(np.where((sub[args.et_pheno] != args.obs) & (sub[args.et_pheno] != 0)))
 	sub[args.t_pheno] = np.where((sub[args.et_pheno] != args.obs) & (sub[args.et_pheno] != 0), tmax, sub[args.t_pheno])
