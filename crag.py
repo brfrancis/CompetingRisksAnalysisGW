@@ -344,14 +344,14 @@ if args.crtype==0:
 print("#    CLINICAL ANALYSIS...    #")
 print("##############################")
 
+if args.covs!="":
+	low_var = pd.DataFrame(sub.var(0) < 10e-5)
+	print("\nResults of the low variance (<10e-5) test... (if True these are removed to avoid convergence issues)")
+	print(low_var)
+	lvf=low_var[low_var.iloc[:,0] == True]	
 
-low_var = pd.DataFrame(sub.var(0) < 10e-5)
-print("\nResults of the low variance (<10e-5) test... (if True these are removed to avoid convergence issues)")
-print(low_var)
-lvf=low_var[low_var.iloc[:,0] == True]	
-
-if not lvf.empty:	
-	sub = sub.drop(lvf.index,axis = 1)
+	if not lvf.empty:	
+		sub = sub.drop(lvf.index,axis = 1)
 
 print("\nResults of pre-GWAS multivariable analysis...")
 cph.fit(sub,duration_col=args.t_pheno,event_col='bin',strata=args.et_pheno)		
