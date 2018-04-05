@@ -249,7 +249,7 @@ def pycrgwas(line, line_no ):
 		subsnp=sub
 		subsnp['gz']=gp
 		subn = subsnp.dropna()		
-		cph.fit(subn,duration_col=args.t_pheno,event_col='bin',strata=[args_et.pheno])		
+		cph.fit(subn,duration_col=args.t_pheno,event_col='bin')		
 		#cph.print_summary()
 		df3_1=pd.DataFrame(cph.summary)
 		df3_2=df3_1.loc['gz',:]
@@ -322,7 +322,7 @@ if args.crtype==1:
 	sub=sub.drop([0])
 	sub[list] = sub[list].apply(pd.to_numeric)
 	sub['bin'] = np.where(sub[args.et_pheno] == args.obs, 1, 0)
-	sub=sub.drop([args_et.pheno])
+	sub=sub.drop([args.et_pheno])
 	#print("HERE")	
 
 if args.crtype==0:
@@ -337,7 +337,7 @@ if args.crtype==0:
 	sub['bin'] = np.where(sub[args.et_pheno] == args.obs, 1, 0)
 	tmax=sub.loc[sub['bin']==1][args.t_pheno].max()
 	sub[args.t_pheno] = np.where((sub[args.et_pheno] != args.obs) & (sub[args.et_pheno] != 0), tmax, sub[args.t_pheno])
-	sub=sub.drop([args_et.pheno])
+	sub=sub.drop([args.et_pheno])
 	
 
 
