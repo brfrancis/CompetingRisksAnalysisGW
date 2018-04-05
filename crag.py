@@ -382,7 +382,7 @@ if __name__ == "__main__":
 			iters = itertools.chain(f, (None,)*num_workers)
 			for num_and_line in enumerate(iters):
 				sys.stdout.write('\r')
-				sys.stdout.write("TEST")
+				sys.stdout.write("#     SNPS ANALYSED.." + str(i) + "    ##     TIME PER SNP.. {0:0.01f} s      #".format((time.time()-start)/i))
 				sys.stdout.flush()
 				work.put(num_and_line)
 	
