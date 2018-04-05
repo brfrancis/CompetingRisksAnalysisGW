@@ -249,7 +249,7 @@ def pycrgwas(line, line_no ):
 		subsnp=sub
 		subsnp['gz']=gp
 		subn = subsnp.dropna()		
-		cph.fit(subn,duration_col=args.t_pheno,event_col='bin',strata=args.t_pheno)		
+		cph.fit(subn,duration_col=args.t_pheno,event_col='bin',strata=args.et_pheno)		
 		#cph.print_summary()
 		df3_1=pd.DataFrame(cph.summary)
 		df3_2=df3_1.loc['gz',:]
@@ -352,7 +352,7 @@ if not lvf.empty:
 	sub = sub.drop(lvf.index,axis = 1)
 
 print("\nResults of pre-GWAS multivariable analysis...")
-cph.fit(sub,duration_col=args.t_pheno,event_col='bin',strata='Reason_stop')		
+cph.fit(sub,duration_col=args.t_pheno,event_col='bin',strata=args.et_pheno)		
 cph.print_summary()
 				
 
