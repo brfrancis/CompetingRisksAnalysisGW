@@ -316,7 +316,8 @@ if args.crtype==1:
 
 	sample = pd.read_csv(args.sfile,sep=" ") 
 	list=[args.t_pheno,args.et_pheno]
-	list.extend(args.covs.split(','))
+	if args.covs!="":
+		list.extend(args.covs.split(','))
 	sub=sample[list]
 	sub=sub.drop([0])
 	sub[list] = sub[list].apply(pd.to_numeric)
@@ -327,7 +328,8 @@ if args.crtype==0:
 
 	sample = pd.read_csv(args.sfile,sep=" ") 
 	list=[args.t_pheno,args.et_pheno]
-	list.extend(args.covs.split(','))
+	if args.covs!="":
+		list.extend(args.covs.split(','))
 	sub=sample[list]
 	sub=sub.drop([0])
 	sub[list] = sub[list].apply(pd.to_numeric)
