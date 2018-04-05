@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-##/opt/apps/resif/data/production/v0.3-20170713/default/software/lang/Python/3.5.3-intel-2017a/bin/python
-#export PYTHONPATH=/opt/apps/resif/data/production/v0.3-20170713/default/software/lang/Python/3.5.3-intel-2017a/bin/python
 
 import subprocess
 import sys
