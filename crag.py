@@ -249,7 +249,7 @@ def pycrgwas(line, line_no ):
 		subsnp=sub
 		subsnp['gz']=gp
 		subn = subsnp.dropna()		
-		cph.fit(subn,duration_col=args.t_pheno,event_col='bin',strata='Reason_stop')		
+		cph.fit(subn,duration_col=args.t_pheno,event_col='bin',strata=args.t_pheno)		
 		#cph.print_summary()
 		df3_1=pd.DataFrame(cph.summary)
 		df3_2=df3_1.loc['gz',:]
