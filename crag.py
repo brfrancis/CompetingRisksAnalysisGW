@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import subprocess
 import sys
@@ -248,18 +248,36 @@ def pycrgwas(line, line_no ):
 		#Analysis
 		subsnp=sub
 		subsnp['gz']=gp
-		subn = subsnp.dropna()		
+		if args.int:
+			subsnp['int'] = gp*sub[args.int]
+
+		subn = subsnp.dropna()
 		cph.fit(subn,duration_col=args.t_pheno,event_col='bin')		
 		#cph.print_summary()
-		df3_1=pd.DataFrame(cph.summary)
-		df3_2=df3_1.loc['gz',:]
-		df3 = pd.DataFrame({'beta':[df3_2.loc['coef']],'se':[df3_2.loc['se(coef)']],'p':[df3_2.loc['p']],'conv':[1]},dtype='str')
-		df1 = pd.DataFrame({'chr':[args.chr],'snp':[gl[1]],'bp':[gl[2]],'info':[info],'maf':[maf],'hwe':[hwe],'ea':[gl[3]],'nea':[gl[4]]})
-		result=df1.join(df3)
-		print(result)
+		df3_1=cph.summary
+		
+		if args.verbose == 0:
+			df3_2 = df3_1.loc['gz',:]
+			df3 = pd.DataFrame({'beta':[df3_2.loc['coef']],'se':[df3_2.loc['se(coef)']],'p':[df3_2.loc['p']],'conv':[1]},dtype='float64') # potential to make this similar to verbose == 1 block in future... 
+			df1 = pd.DataFrame({'chr':[args.chr],'test':[gl[1]],'snp':[gl[1]],'bp':[gl[2]],'info':[info],'maf':[maf],'hwe':[hwe],'ea':[gl[3]],'nea':[gl[4]]})
+			result=df1.join(df3)
+		if args.verbose == 1:
+			df3_1.rename(index=str, columns={"coef":"beta","se(coef)":"se"}, inplace=True)
+			df3 = df3_1.loc[:,['beta','se','p']]
+			df1n = pd.DataFrame({'chr':[args.chr],'snp':[gl[1]],'bp':[gl[2]],'info':[info],'maf':[maf],'hwe':[hwe],'ea':[gl[3]],'nea':[gl[4]],'conv':[1]})
+			df1 = pd.concat([df1n]*df3.shape[0])
+			df1.reset_index(drop=True, inplace=True)
+			df3.reset_index(drop=True, inplace=True)
+			result = pd.concat([df1,df3], axis=1)
+			result['test'] = df3_1.index
+			result['test'].replace(to_replace="gz",value=gl[1],inplace=True)
+			
+		result['p'] = result['p'].apply(lambda x: round(x,5))
+		result[['info','maf','hwe']] = result[['info','maf','hwe']].apply(lambda x: round(x,2))
+		result[['beta','se']] = result[['beta','se']].apply(lambda x: round(x,4))
 		return result;
 
-	
+
 
 
 parser = argparse.ArgumentParser()
@@ -270,11 +288,9 @@ parser.add_argument('--gfile', type=str, default="",
 parser.add_argument('--sfile', type=str, default="",
 		    help='sample file needed')
 parser.add_argument('--ofile', type=str, default="",
-		    help='file stem to output to needed')					
+		    help='output file stem, e.g. <ofile>.out')					
 parser.add_argument('--chr', type=str,
-		    help='which chromosome')
-parser.add_argument('--chunk', type=str,
-		    help='which 10k chunk is required (currently not used!)')
+		    help='chromosome number to use in output file')
 parser.add_argument('--obs', type=int, default=1,
 		    help='which obs indicator is the competing risk (1 is default, do not specify 0 as it is reserved for censored observations)')
 parser.add_argument('--t_pheno', type=str, default="",
@@ -283,10 +299,14 @@ parser.add_argument('--et_pheno', type=str, default="",
 		    help='event type indicator in SAMPLE file')
 parser.add_argument('--covs', type=str, default="",
 		    help='comma delimited list of covariates in SAMPLE file')
+parser.add_argument('--int', type=str, default="",
+		    help='covariate to adjust for SNP covariate interaction, must be from SAMPLE file')
 parser.add_argument('--crtype', type=int, default=0,
-		    help='use 0 for subdistribution competing risks (default) or 1 for cause-specific competing risks')
+		    help='use 0 for subdistribution competing risks (default), 1 for cause-specific competing risks and 2 for conventional Cox PH survival model')
 parser.add_argument('--r', type=int, default=0,
 		    help='use 1 to perform analysis with R package cmprsk or 0 to perform analysis in Python package lifelines')
+parser.add_argument('--verbose', type=int, default=0,
+		    help='use 1 to print results of covariates tested at each SNP, includes interaction terms of specified')
 args=parser.parse_args()
 
 if args.r == 1:
@@ -312,55 +332,54 @@ print("##############################")
 
 # Reduce sample to needed covs
 
-if args.crtype==1:
-
-	sample = pd.read_csv(args.sfile,sep=" ") 
-	list=[args.t_pheno,args.et_pheno]
-	if args.covs!="":
-		list.extend(args.covs.split(','))
-	sub=sample[list]
-	sub=sub.drop([0])
-	sub[list] = sub[list].apply(pd.to_numeric)
-	sub['bin'] = np.where(sub[args.et_pheno] == args.obs, 1, 0)
-	sub=sub.drop(columns=[args.et_pheno])
-	#print("HERE")	
+sample = pd.read_csv(args.sfile,sep=" ") 
+list=[args.t_pheno,args.et_pheno]
+if args.covs!="":
+	list.extend(args.covs.split(','))
+if args.int!="":
+	list.extend(args.int.split(','))
+sub=sample[list]
+sub=sub.drop([0])
+sub[list] = sub[list].apply(pd.to_numeric)
+sub['bin'] = np.where(sub[args.et_pheno] == args.obs, 1, 0)
 
 if args.crtype==0:
 
-	sample = pd.read_csv(args.sfile,sep=" ") 
-	list=[args.t_pheno,args.et_pheno]
-	if args.covs!="":
-		list.extend(args.covs.split(','))
-	sub=sample[list]
-	sub=sub.drop([0])
-	sub[list] = sub[list].apply(pd.to_numeric)
-	sub['bin'] = np.where(sub[args.et_pheno] == args.obs, 1, 0)
 	tmax=sub.loc[sub['bin']==1][args.t_pheno].max()
 	sub[args.t_pheno] = np.where((sub[args.et_pheno] != args.obs) & (sub[args.et_pheno] != 0), tmax, sub[args.t_pheno])
-	sub=sub.drop(columns=[args.et_pheno])
 	
+if args.crtype==2:
+
+	tmax=sub.loc[sub['bin']==1][args.t_pheno].max()
+	sub['bin'] = np.where(sub[args.et_pheno] > 0, 1, 0)
+
+sub=sub.drop(columns=[args.et_pheno])
+
 
 
 # Check for low variance
 print("#    CLINICAL ANALYSIS...    #")
 print("##############################")
 
-if args.covs!="":
+if args.covs:
 	low_var = pd.DataFrame(sub.var(0) < 10e-5)
 	print("\nResults of the low variance (<10e-5) test... (if True these are removed to avoid convergence issues)")
-	print(low_var)
+	if args.int:
+		print(low_var.loc[args.covs.split(',') + args.int.split(',')])
+	if not args.int:
+		print(low_var.loc[args.covs.split(',')])
+		
 	lvf=low_var[low_var.iloc[:,0] == True]	
 
 	if not lvf.empty:	
 		sub = sub.drop(lvf.index,axis = 1)
 
 	print("\nResults of pre-GWAS multivariable analysis...")
-	cph.fit(sub,duration_col=args.t_pheno,event_col='bin',strata=[args_et.pheno])		
+	cph.fit(sub,duration_col=args.t_pheno,event_col='bin')
 	cph.print_summary()
-				
 
 # Open gen file and perform calculation every line
-colNames = ('chr','snp','bp','p','info','maf','hwe','beta','se','conv','ea','nea')
+colNames = ('chr','snp','test','bp','ea','nea','p','info','maf','hwe','beta','se')
 #CHR SNP BP P INFO MAF HWE BETA SE CONV
 print("##############################")
 print("#   BEGIN GWAS ANALYSIS...   #")
