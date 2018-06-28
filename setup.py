@@ -4,7 +4,6 @@ from setuptools import setup
 
 setup(
     name="crag",
-    version=__version__,
     author="Ben Francis",
     author_email="b.r.francis@liverpool.ac.uk",
     description="Competing Risk Analysis Genome-wide",
