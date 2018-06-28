@@ -9,7 +9,7 @@ setup(
     description="Competing Risk Analysis Genome-wide",
     keywords="competing risks survival analysis statistics data analysis",
     url="https://github.com/brfrancis/CompetingRisksAnalysisGW",
-    packages=['crag'],
+    packages=['crag.py'],
     install_requires=[
       "subprocess",
       "sys",
