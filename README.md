@@ -7,7 +7,7 @@
 
 ### What can *CRAG* do for you? 
 
-Survival analysis is the study of "time-to-event" (TTE) outcomes, taking the focus off *if* an event will occur and instead looking at *when* an event will occur. Often, the when question is answered by a combination of factors, such as age or sex, survival analysis tests whether these associations are clear from data collected. So, if I'm asking *when will I respond to a medication?*, survival analysis can help to answer this question. Further information can be found on this great page by Cam Davidson-Pilon [here](http://lifelines.readthedocs.org/en/latest/Survival%20Analysis%20intro.html).
+Survival analysis is the study of "time-to-event" (TTE) outcomes, taking the focus off *if* an event will occur and instead looking at *when* an event will occur. Often, the when question is answered by a combination of factors, such as age or sex, survival analysis tests whether these associations are clear from data collected. So, if I'm asking *when will I respond to a medication?*, survival analysis can help to answer this question. Further information can be found on this great page by Cam Davidson-Pilon (author of lifelines) [here](http://lifelines.readthedocs.org/en/latest/Survival%20Analysis%20intro.html).
 
 A genome-wide association study (GWAS), is a study of a genetic variants across the genome. Whether we are faced with a *when* or *if*, GWAS allows us to consider whether genetic factors are part of the combination of factors that answer these questions. 
 
@@ -25,7 +25,7 @@ Please install the following  Python packages prior to use of CRAG (some may be 
 
 Pull:
 
-       pip install --upgrade --no-deps git+https://github.com/brfrancis/CompetingRisksAnalysisGW/lifelines.git
+       pip install --upgrade --no-deps git+https://github.com/brfrancis/CompetingRisksAnalysisGW.git
 
 from the command line.
 
