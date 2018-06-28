@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Test of new line
+
 import subprocess
 import sys
 import math
