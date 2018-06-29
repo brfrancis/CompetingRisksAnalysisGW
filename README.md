@@ -11,7 +11,8 @@ Survival analysis is the study of "time-to-event" (TTE) outcomes, taking the foc
 
 A genome-wide association study (GWAS), is a study of a genetic variants across the genome. Whether we are faced with a *when* or *if*, GWAS allows us to consider whether genetic factors are part of the combination of factors that answer these questions. 
 
-*CRAG* is a novel software that handles particular TTE outcomes, such as drug withdrawal, that occur for different reasons, such as lack of efficacy or adverse drug reaction, appropriately modelling via “competing risks”. 
+*CRAG* is a novel software that performs survival analysis genome-wide and goes one step further: handling a particular type of TTE outcomes that occur for different reasons, such as drug withdrawal occuring due to either the drug not working or causing a bad reaction, appropriately modelling via “competing risks”. 
+
 *CRAG* is an easy to use software implemented using Python, and is compatible with Linux, Mac OS X & Windows operating systems. *CRAG* can handle large-scale genome-wide data including imputed genotypes. Analyses can be undertaken with a cause-specific or sub-distribution model. The software can adjust for multiple covariates and incorporate SNP-covariate interaction effects.
 
 The main use of CRAG is expected to be in pharmacogenetic studies to identify genetic biomarkers of patient response to treatment, with the ultimate goal of personalising therapeutic intervention for an array of diseases.
@@ -19,11 +20,11 @@ The main use of CRAG is expected to be in pharmacogenetic studies to identify ge
 ### Installation:
 #### Dependencies:
 
-Please install the following  Python packages prior to use of CRAG (some may be installed with Python): subprocess, sys, math, lifelines, csv, numpy, pandas, gzip, time, argparse and warnings.
+Please install the following  Python packages prior to use of *CRAG* (some may be installed with Python): subprocess, sys, math, lifelines, csv, numpy, pandas, gzip, time, argparse and warnings.
 
 #### Installing
 
-Pull:
+Type the following command in the terminal/command line to intall *CRAG*
 
        pip install --upgrade --no-deps git+https://github.com/brfrancis/CompetingRisksAnalysisGW.git
 
