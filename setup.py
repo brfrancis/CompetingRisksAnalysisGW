@@ -1,6 +1,6 @@
 import os
 
-import setuptools
+from setuptools import setup, find_packages
 
 datloc="data/*"
 bdatloc=str.encode(datloc)
@@ -18,7 +18,7 @@ try:
 except(ImportError):
     readme_rst = open(readme_md,encoding='utf-8').read()
 
-setuptools.setup(
+setup(
     name="crag",
     version="1.0.5",
     author="Ben Francis",
@@ -29,8 +29,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     keywords="competing risks survival analysis statistics data analysis",
     url="https://github.com/brfrancis/CompetingRisksAnalysisGW",
-    packages=['crag',
-    ],
+    packages=['crag'],
     classifiers=(
       "Programming Language :: Python :: 2",
       "Programming Language :: Python :: 3",
@@ -48,5 +47,5 @@ setuptools.setup(
         "data/*",
       ]
     },
-    scripts=['crag.py'],
+    scripts=['bin/crag_gwas.py'],
 )
