@@ -1,4 +1,30 @@
-name="crag"
+import subprocess
+import sys
+import math
+from lifelines import CoxPHFitter
+cph = CoxPHFitter()
+#import scipy.stats as stats
+#class DevNull:
+#	def write(self, msg):
+#		pass
+#sys.stderr = DevNull()
+import csv
+import numpy as np
+import pandas as pd
+pd.options.mode.chained_assignment = None
+import gzip
+import time
+start=time.time()
+#import StringIO
+import warnings
+import threading
+from multiprocessing import Process, Manager
+import itertools
+import time
+import warnings
+#import progressbar
+#from multiprocessing.dummy import Pool as ThreadPool
+
 
 def HWE_test_chi(obs_AA, obs_Aa, obs_aa, miss):
 	obs_t = (obs_Aa + obs_AA + obs_aa - miss)
