@@ -26,7 +26,7 @@ Please install the following  Python packages prior to use of *CRAG* (some may b
 
 Type the following command in the terminal/command line to intall *CRAG*
 
-       pip install --upgrade --no-deps git+https://github.com/brfrancis/CompetingRisksAnalysisGW.git
+       pip install --upgrade git+https://github.com/brfrancis/CompetingRisksAnalysisGW.git
 
 from the command line.
 

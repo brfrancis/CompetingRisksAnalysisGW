@@ -1,38 +1,7 @@
 #!/usr/bin/env python
 
-from crag import sample_read, crtype_sample, low_var_test, QC, pycrgwas, output, oresults
+from crag import sample_read, crtype_sample, low_var_test, QC, pycrgwas, output, do_work, gw_analysis, gwasprogress
 import argparse
-import threading
-from multiprocessing import Process, Manager, Pool
-import itertools
-import time
-start=time.time()
-import warnings
-import gzip
-import sys
-
-def do_work(in_queue, out_list, sub):
-	while True:
-		item = in_queue.get()
-		line_no, line = item
-	# exit signal
-		if line == None:
-			return
-
-	# Using lifelines work for cause-specific
-		gp, info, maf, hwe, gl = QC(line, line_no, nchr)
-		df3_1 = pycrgwas(gp, sub, x, t_pheno)
-		result = output(df3_1, info, maf, hwe, gl, verbose)
-		# output
-		out_list.append(result)
-
-def gwasprogress():
-	sys.stdout.write('\r')
-	progress = "#" + str(i-thread) + " SNPS ANALYSED @ {0:0.01f} SECS PER SNP #".format((time.time()-start)/i)
-	#sys.stdout.write(progress.center(os.get_terminal_size().columns))
-	sys.stdout.write(progress)
-	sys.stdout.flush()
-	return
 
 def get_args():
 	parser = argparse.ArgumentParser()
@@ -83,8 +52,8 @@ if __name__ == "__main__":
 	print("#      WELCOME TO CRAG       #")
 	print("##############################\n")
 	# Reduce sample to needed covs
-	sub=sample_read(sfile,covs,x,t_pheno,et_pheno,obs)
-	crtype_sample(crtype, sub, t_pheno, et_pheno,obs)
+	sub = sample_read(sfile,covs,x,t_pheno,et_pheno,obs)
+	sub = crtype_sample(crtype, sub, t_pheno, et_pheno,obs)
 
 	# Check for low variance
 	if not '' in covs:
@@ -99,43 +68,7 @@ if __name__ == "__main__":
 	print("#   BEGIN GWAS ANALYSIS...   #")
 	print("##############################\n")
 	
-	colNames = ('chr','snp','test','bp','ea','nea','p','info','maf','hwe','beta','se')
-	num_workers = thread
-
-	manager = Manager()
-	results = manager.list()
-	work = manager.Queue(num_workers)
-
-	#start for workers
-	pool = []
-	for i in range(num_workers):
-		p = Process(target=do_work, args=(work, results, sub))
-		p.start()
-		pool.append(p)
-
-	i=1
-	if gfile.endswith('gz'):
-
-		with gzip.open(gfile,'rt') as f:
-			iters = itertools.chain(f, (None,)*num_workers)
-			for num_and_line in enumerate(iters):
-				gwasprogress()
-				work.put(num_and_line)
-				i+=1
-
-	else:
-		with open(gfile,'rt') as f:
-			iters = itertools.chain(f, (None,)*num_workers)
-			for num_and_line in enumerate(iters):
-				gwasprogress()
-				work.put(num_and_line)
-				i+=1
-
-	for p in pool:
-		p.join()
-
-	oresults(results,colNames,ofile)
-
+	gw_analysis(thread, sub, nchr, x, t_pheno, verbose, gfile, ofile)
 
 	print("\n\n##############################")
 	print("#      END OF ANALYSIS       #")

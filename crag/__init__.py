@@ -18,8 +18,21 @@ import warnings
 import itertools
 import time
 import warnings
+import threading
+from multiprocessing import Process, Manager, Pool
+import gzip
+import time
+start=time.time()
+import warnings
+import sys
 
-
+def gwasprogress():
+	sys.stdout.write('\r')
+	progress = "#" + str(i-thread) + " SNPS ANALYSED @ {0:0.01f} SECS PER SNP #".format((time.time()-start)/i)
+	#sys.stdout.write(progress.center(os.get_terminal_size().columns))
+	sys.stdout.write(progress)
+	sys.stdout.flush()
+	return
 
 def HWE_test_chi(obs_AA, obs_Aa, obs_aa, miss):
 	obs_t = (obs_Aa + obs_AA + obs_aa - miss)
@@ -241,9 +254,70 @@ def low_var_test(sub,x,covs,t_pheno):
 	cph.print_summary()
 	return sub;
 	
-def oresults(results,colNames,ofile):
+def oresults(results,ofile):
+	colNames = ('chr','snp','test','bp','ea','nea','p','info','maf','hwe','beta','se')
 	f_results=pd.concat(results)
 	final=f_results.ix[:,colNames]
 	final.to_csv(ofile + ".out",sep=" ",index=False)
 	return
 	
+def do_work(in_queue, out_list, sub, nchr, x, t_pheno, verbose):
+	while True:
+		item = in_queue.get()
+		line_no, line = item
+	# exit signal
+		if line == None:
+			return
+
+	# Using lifelines work for cause-specific
+		gp, info, maf, hwe, gl = QC(line, line_no, nchr)
+		df3_1 = pycrgwas(gp, sub, x, t_pheno)
+		result = output(df3_1, info, maf, hwe, gl, verbose)
+		# output
+		out_list.append(result)
+		
+def gw_analysis(thread, sub, nchr, x, t_pheno, verbose, gfile, ofile):
+
+	num_workers = thread
+
+	manager = Manager()
+	results = manager.list()
+	work = manager.Queue(num_workers)
+
+	#start for workers
+	pool = []
+	for i in range(num_workers):
+		p = Process(target=do_work, args=(work, results, sub, nchr, x, t_pheno, verbose))
+		p.start()
+		pool.append(p)
+
+	i=1
+	if gfile.endswith('gz'):
+
+		with gzip.open(gfile,'rt') as f:
+			iters = itertools.chain(f, (None,)*num_workers)
+			for num_and_line in enumerate(iters):
+				gwasprogress(i,thread)
+				work.put(num_and_line)
+				i+=1
+
+	else:
+		with open(gfile,'rt') as f:
+			iters = itertools.chain(f, (None,)*num_workers)
+			for num_and_line in enumerate(iters):
+				gwasprogress(i,thread)
+				work.put(num_and_line)
+				i+=1
+
+	for p in pool:
+		p.join()
+		
+	oresults(results,ofile)
+		
+def gwasprogress(i,thread):
+	sys.stdout.write('\r')
+	progress = "#" + str(i-thread) + " SNPS ANALYSED @ {0:0.01f} SECS PER SNP #".format((time.time()-start)/i)
+	#sys.stdout.write(progress.center(os.get_terminal_size().columns))
+	sys.stdout.write(progress)
+	sys.stdout.flush()
+	return
