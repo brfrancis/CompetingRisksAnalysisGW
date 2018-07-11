@@ -28,12 +28,20 @@ Type the following command in the terminal/command line to intall *CRAG*
 
        pip install --upgrade git+https://github.com/brfrancis/CompetingRisksAnalysisGW.git
 
-from the command line.
+from the command line. Depending on your system, you may need to specify "sudo" or "sudo -H" in addition to the above command.
 
 #### Testing CRAG
 
+After install, it's time to take *CRAG* for a spin with the following command:
 
-### CRAG guide
+      python ./bin/crag_gwas.py --sfile ./crag/data/test.sample --gfile ./crag/data/test.gen.gz --t_pheno time --et_pheno type --cov c1
+      
+This calls the script file, zipped GEN file and SAMPLE file provided with *CRAG* to perform a basic analysis and produce a results file called "crag.out". To add extra commands to this have a look at the script options with:
+
+      python ./bin/crag_gwas.py --help
+
+
+### More information on survival analysis
 
 If you are new to survival analysis, wondering why it is useful, or are interested in *lifelines* examples and syntax,
 please check out the [Documentation and Tutorials page](http://lifelines.readthedocs.org/en/latest/index.html)
